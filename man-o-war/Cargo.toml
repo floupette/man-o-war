@@ -1,0 +1,7 @@
+[package]
+name = "man-o-war"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rustdoc-parser = { path = "../rustdoc-parser" }

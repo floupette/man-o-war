@@ -1,0 +1,7 @@
+[workspace]
+
+members = [
+  "man-o-war",
+  "rustdoc-parser",
+]
+resolver = "2"
