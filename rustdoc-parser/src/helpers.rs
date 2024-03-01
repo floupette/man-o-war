@@ -20,7 +20,7 @@ pub fn extract(name: &str, data: &str) -> HtmlElement {
         .split_inclusive(&untag)
         .next()
         .expect("extract_tag failed to get rid of the trailing data");
-    
+
     HtmlElement::build(&mut tag)
 }
 
@@ -211,14 +211,15 @@ impl HtmlElement {
             zipped_content.push(last_span);
         }
 
-        Box::new(zipped_content
-            .into_iter()
-            .reduce(|previous, next| {
-                let previous_content = un_escape(previous.raw_content());
-                let next_content = un_escape(next.raw_content());
-                Fragment::Raw(format!("{}{}", previous_content, next_content))
-            })
-            .unwrap()
+        Box::new(
+            zipped_content
+                .into_iter()
+                .reduce(|previous, next| {
+                    let previous_content = un_escape(previous.raw_content());
+                    let next_content = un_escape(next.raw_content());
+                    Fragment::Raw(format!("{}{}", previous_content, next_content))
+                })
+                .unwrap(),
         )
     }
 }
@@ -315,7 +316,6 @@ impl Fragment {
 
     /// Uses the un_escape function to un_escape the full inner content of a Fragment.
     pub fn un_escape_content(self) -> Self {
-
         match self {
             Fragment::Bold(fragments) => Fragment::Bold(
                 fragments
@@ -328,7 +328,7 @@ impl Fragment {
             }
             Fragment::CodeBlock(boxed_fragment) => {
                 Fragment::CodeBlock(Box::new(boxed_fragment.un_escape_content()))
-            },
+            }
             Fragment::Colored(boxed_fragment, color) => {
                 Fragment::Colored(Box::new(boxed_fragment.un_escape_content()), color)
             }

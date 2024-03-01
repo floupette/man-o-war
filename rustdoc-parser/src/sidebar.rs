@@ -1,7 +1,4 @@
-use crate::helpers::{
-    HtmlElement,
-    un_escape
-};
+use crate::helpers::{un_escape, HtmlElement};
 
 /////////////////////////////////////////////////////////////////////////////
 // Sidebar
@@ -29,15 +26,19 @@ impl Sidebar {
                     let heading = HtmlElement::build(&mut split[0]);
                     let inner_a = &heading.inner_elements[0];
                     let name = String::from(inner_a.content[0].raw_content());
-                    let items = HtmlElement::build(&mut split[1])
-                        .inner_elements
-                        .iter()
-                        .map(|inner_element| {
-                            let first_inner_element_content =
-                                &inner_element.inner_elements[0].content[0].raw_content();
-                            un_escape(first_inner_element_content)
-                        })
-                        .collect::<Vec<String>>();
+                    let items = if split.len() > 1 {
+                        HtmlElement::build(&mut split[1])
+                            .inner_elements
+                            .iter()
+                            .map(|inner_element| {
+                                let first_inner_element_content =
+                                    &inner_element.inner_elements[0].content[0].raw_content();
+                                un_escape(first_inner_element_content)
+                            })
+                            .collect::<Vec<String>>()
+                    } else {
+                        Vec::new()
+                    };
 
                     SidebarSection { name, items }
                 })

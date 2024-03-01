@@ -1,10 +1,6 @@
 use super::{
-    helpers::{
-		extract,
-		Fragment,
-		HtmlElement
-		},
-	traits::Body,
+    helpers::{extract, Fragment, HtmlElement},
+    traits::Body,
 };
 
 /// Represents a single auto trait implementation.
@@ -17,10 +13,9 @@ pub fn parse_auto_traits(data: &str) -> Vec<Box<dyn Body>> {
     data.split("</section>")
         .filter(|i| *i != "</div>")
         .map(|implementation| -> Box<dyn Body> {
-            Box::new(AutoTrait(Vec::from([Fragment::Bold(extract(
-                "h3",
-                implementation,
-            ).zip_content())])))
+            Box::new(AutoTrait(Vec::from([Fragment::Bold(
+                extract("h3", implementation).zip_content(),
+            )])))
         })
         .collect()
 }
@@ -28,7 +23,7 @@ pub fn parse_auto_traits(data: &str) -> Vec<Box<dyn Body>> {
 /// Represents a single implementation for one specific type.
 #[derive(Debug)]
 pub struct Implementation {
-    pub name: Vec<Fragment>,
+    pub inherent_impl: Vec<Fragment>,
     pub methods: Vec<Method>,
 }
 impl Body for Implementation {}
@@ -39,7 +34,9 @@ pub fn parse_implementations(data: &str) -> Vec<Box<dyn Body>> {
         .skip(1)
         .map(|imp| -> Box<dyn Body> {
             let (unfiltered_content, _methods) = imp.split_once("</summary>").unwrap();
-            let implementation = Vec::from([Fragment::Bold(extract("h3", unfiltered_content).zip_content())]);
+            let inherent_impl = Vec::from([Fragment::Bold(
+                extract("h3", unfiltered_content).zip_content(),
+            )]);
             let methods = _methods
                 .trim_end_matches("</div></details>")
                 .split("<details class=\"toggle method-toggle\" open>")
@@ -47,7 +44,7 @@ pub fn parse_implementations(data: &str) -> Vec<Box<dyn Body>> {
                 .map(parse_method)
                 .collect();
             Box::new(Implementation {
-                implementation,
+                inherent_impl,
                 methods,
             })
         })
@@ -78,7 +75,7 @@ pub struct Description {
 
 /// Represents a method's introduction's possible subsection - Examples, Panics, and what have you.
 #[derive(Debug)]
-struct DescriptionSection {
+pub struct DescriptionSection {
     pub name: Fragment,
     pub content: Vec<Fragment>,
 }
@@ -93,7 +90,7 @@ fn parse_description(description: &str) -> Description {
             .split("<h5")
             .map(|_section| {
                 let (_content, mut __sections) = _section.split_once("</h5>").unwrap();
-                let section = Fragment::Bold(Vec::from([Fragment::Raw(String::from(
+                let name = Fragment::Bold(Vec::from([Fragment::Raw(String::from(
                     _content.split_once("</a>").unwrap().1,
                 ))]));
                 let mut content = Vec::new();
@@ -109,7 +106,9 @@ fn parse_description(description: &str) -> Description {
                         }
                         Some('d') => {
                             let (head, tail) = __sections.split_once("</div>").unwrap();
-                            content.push(Vec::from([Fragment::CodeBlock(extract("code", head).zip_code())]));
+                            content.push(Vec::from([Fragment::CodeBlock(
+                                extract("code", head).zip_code(),
+                            )]));
                             __sections = tail;
                         }
                         Some(_) | None => break,
@@ -117,7 +116,7 @@ fn parse_description(description: &str) -> Description {
                 }
 
                 DescriptionSection {
-                    section,
+                    name,
                     content: content.iter().flatten().cloned().collect(),
                 }
             })
@@ -134,6 +133,24 @@ fn parse_description(description: &str) -> Description {
         introduction,
         sections,
     }
+}
+
+#[derive(Debug)]
+struct RequiredAssociatedTypes {
+    name: Vec<Fragment>,
+    description: Fragment
+}
+impl Body for RequiredAssociatedTypes{}
+
+pub fn parse_required_associated_types(data: &str) -> Vec<Box<dyn Body>> {
+    Vec::from([
+        Box::new(
+            RequiredAssociatedTypes {
+                name: extract("h4", data).zip_content(),
+                description: extract("p", data).content[0].clone()
+            }
+        ) as Box<dyn Body>
+    ])
 }
 
 /// Represents a single variant of an Enum.

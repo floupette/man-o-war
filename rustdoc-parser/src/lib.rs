@@ -35,11 +35,8 @@ pub mod sidebar;
 pub mod traits;
 
 use crate::{
-    errors::Herr,
-    helpers::Fragment,
-    main_content::MainContent,
-    sections::Description,
-    sidebar::Sidebar
+    errors::Herr, helpers::Fragment, main_content::MainContent, sections::Description,
+    sidebar::Sidebar,
 };
 
 #[derive(Debug)]
@@ -55,7 +52,7 @@ pub struct Page {
 /////////////////////////////////////////////////////////////////////////////
 
 /// Converts an HTML document into a Page.
-pub fn process_html(html: &str) -> Result<(), Herr> {
+pub fn process_html(html: &str) -> Result<(), Box<dyn std::error::Error>> {
     let mut sidebar: Sidebar = Sidebar(Vec::new());
     let mut main_content = MainContent(Vec::new());
     html.split_once("<section>")
@@ -70,5 +67,5 @@ pub fn process_html(html: &str) -> Result<(), Herr> {
             main_content = MainContent::build(section_block);
             dbg!(&main_content);
         })
-        .ok_or(Herr::Parsing("Can't process that page, sir"))
+        .ok_or(Box::new(Herr::Parsing("Can't process that page, sir")))
 }
