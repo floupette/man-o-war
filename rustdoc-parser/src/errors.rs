@@ -1,6 +1,10 @@
 use std::{
     error::Error,
-    fmt::{Display, Formatter, Result},
+    fmt::{
+        Display,
+        Formatter,
+        Result
+        }
 };
 
 #[derive(Debug)]

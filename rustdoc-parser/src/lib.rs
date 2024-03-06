@@ -28,14 +28,17 @@
 #![feature(let_chains)]
 
 pub mod errors;
-pub mod helpers;
+pub mod helper_types;
 pub mod main_content;
-pub mod sections;
 pub mod sidebar;
-pub mod traits;
 
 use crate::{
-    errors::Herr, helpers::Fragment, main_content::MainContent, sections::Description,
+    errors::Herr,
+    helper_types::{
+        description::Description,
+        fragment::Fragment
+        },
+    main_content::MainContent,
     sidebar::Sidebar,
 };
 
@@ -47,10 +50,6 @@ pub struct Page {
     main_content: MainContent,
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// main function
-/////////////////////////////////////////////////////////////////////////////
-
 /// Converts an HTML document into a Page.
 pub fn process_html(html: &str) -> Result<(), Box<dyn std::error::Error>> {
     let mut sidebar: Sidebar = Sidebar(Vec::new());
@@ -58,14 +57,20 @@ pub fn process_html(html: &str) -> Result<(), Box<dyn std::error::Error>> {
     html.split_once("<section>")
         .and_then(|(_head, body)| body.split_once("</section>"))
         .and_then(|(sidebar_content, main)| {
-            sidebar = Sidebar::build(sidebar_content);
+            sidebar = Sidebar::parse(sidebar_content);
             main.split_once("<section id=\"main-content\" class=\"content\">")
         })
-        .and_then(|(_, main_c)| main_c.split_once("<script"))
-        .and_then(|(main_cont, _)| main_cont.split_once("</details>"))
+        .map(|(_, main_c)| {
+            if let Some((next, _)) = main_c.split_once("<script") {
+                next
+            } else {
+                main_c.trim_end_matches("</section></div></main></body></html>")
+            }
+        })
+        .and_then(|main_cont| main_cont.split_once("</details>"))
         .map(|(_introduction_content, section_block)| {
-            main_content = MainContent::build(section_block);
-            dbg!(&main_content);
+            main_content = MainContent::parse(section_block);
+            // dbg!(&main_content);
         })
         .ok_or(Box::new(Herr::Parsing("Can't process that page, sir")))
 }
